@@ -84,7 +84,7 @@ jobs:
 
     env:
       HF_USERNAME: RomaneF
-      HF_SPACE_NAME: API_CREDITDEFAULT_PREDICTION
+      HF_SPACE_NAME: test_P6_LR
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
     steps:
@@ -113,11 +113,8 @@ jobs:
         # Nettoyer un éventuel remote déjà présent
         git remote remove hf || true
         # Ajoute le remote AVEC token (auth HTTPS)
-        git remote add hf https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/RomaneF/API_CREDITDEFAULT_PREDICTION 
+        git remote add hf https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/RomaneF/test_P6_LR
         git push hf main --force
-
-
-
 
 
         
