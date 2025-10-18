@@ -1,0 +1,125 @@
+name: CI/CD API_CREDITDEFAULT_PREDICTION
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ============================================
+  # JOB 1: Tests
+  # ============================================
+  test:
+    name: Run Tests unitaires et intégration
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+
+    - name: Run tests unit and integr
+      run: |
+        python -m pytest test_unit.py -v
+        python -m pytest test_integration.py -v
+
+  # ============================================
+  # JOB 2: Build Docker Image
+  # ============================================
+  
+  build:
+    name: Build de Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build -t api_default_prediction:latest .
+
+    - name: Test Docker image
+      run: |
+        docker run -d -p 7860:7860 --name test-api api_default_prediction:latest
+        sleep 10
+        curl -f http://localhost:7860/ || exit 1
+        docker stop test-api
+
+    - name: Save Docker image
+      run: |
+        docker save api_default_prediction:latest -o image.tar
+
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-image
+        path: image.tar
+        retention-days: 1
+
+
+
+  # ============================================
+  # JOB 3: Deploy to Hugging Face Space
+  # ============================================
+  deploy:
+    name: Deploy to Hugging Face spaces
+    runs-on: ubuntu-latest
+    needs: build
+
+    env:
+      HF_USERNAME: RomaneF
+      HF_SPACE_NAME: API_CREDITDEFAULT_PREDICTION
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        lfs: true
+
+    - name: Download Docker image
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-image
+
+    - name: Load Docker image
+      run: docker load -i image.tar
+
+    - name: Configure Git identity
+      run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+    - name: Push to Hugging Face Space
+      run: |
+        echo "déploiement vers The Hugging Face OK"
+        # Nettoyer un éventuel remote déjà présent
+        git remote remove hf || true
+        # Ajoute le remote AVEC token (auth HTTPS)
+        git remote add hf https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/RomaneF/API_CREDITDEFAULT_PREDICTION 
+        git push hf main --force
+
+
+
+
+
+        
+
+
