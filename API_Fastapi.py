@@ -222,7 +222,7 @@ class ClientData(BaseModel):
 # Configuration du logger
 # ============================================================
 
-LOG_DIR = "logs"
+LOG_DIR = "/tmp/logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = os.path.join(LOG_DIR, "api_logger.log")
 
