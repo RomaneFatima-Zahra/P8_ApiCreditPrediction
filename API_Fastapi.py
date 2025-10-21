@@ -11,6 +11,7 @@ import uuid
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
 import json
+from fastapi.responses import PlainTextResponse
 
 # ============================================================
 # Définition des Enums pour les champs à choix limités
@@ -359,3 +360,19 @@ def predict(request: Request, client: ClientData):
             "traceback": traceback.format_exc()
         })
         raise HTTPException(status_code=400, detail="Erreur lors de la prédiction. Vérifiez les données d'entrée.")
+
+#------------------------------------------------------------------------------------------------------------------
+# 3eme Endpoint : Gestion des loggs
+#------------------------------------------------------------------------------------------------------------------
+
+@app.get("/logs", tags=["Logg"])
+def get_logs():
+    try:
+        with open("/tmp/logs/api_logger.log", "r") as f:
+            return PlainTextResponse(f.read())
+    except Exception as e:
+        return PlainTextResponse(f"Erreur : {e}", status_code=500)
+
+
+
+
