@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 from enum import Enum
 import joblib
@@ -11,7 +12,8 @@ import uuid
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
 import json
-from fastapi.responses import PlainTextResponse
+import psycopg2
+from psycopg2.extras import Json
 
 # ============================================================
 # Définition des Enums pour les champs à choix limités
@@ -238,11 +240,76 @@ logger.info("Logs écrits dans logs/api_logger.log dans le dossier du projet.")
 
 #Fonction pour écrire des logs structurés au format JSONL
 
-def write_log(entry: dict):
+def write_local_log(entry: dict):
     try:
         logger.info(json.dumps(entry, ensure_ascii=False))
     except Exception as e : 
         logger.error(f"Erreur lors de l'écriture du log structuré{e}")
+
+# ============================================================
+# Connexion à la base PostgreSQL Supabase
+# ============================================================
+
+SUPABASE_URI = os.getenv("SUPABASE_URI")
+
+def get_db_connection():
+    """Connexion à la base Supabase PostgreSQL"""
+    if not SUPABASE_URI:
+        logger.info("SUPABASE_URI non définie — connexion à la base désactivée.")
+        return None
+    try:
+        conn = psycopg2.connect(SUPABASE_URI)
+        conn.autocommit = True
+        return conn
+    except Exception as e:
+        logger.error(f"Erreur de connexion à Supabase : {e}")
+        return None
+
+def write_supabase_log(entry: dict):
+    """Envoie des logs dans la table logs_api sur Supabase"""
+    conn = get_db_connection()
+    if conn is None:
+        return
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS logs_api (
+                    id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMPTZ,
+                    request_id TEXT,
+                    event TEXT,
+                    method TEXT,
+                    path TEXT,
+                    status_code INT,
+                    duration FLOAT,
+                    client_ip TEXT,
+                    input_data JSONB,
+                    prediction TEXT,
+                    probability FLOAT,
+                    error TEXT
+                )
+            """)
+            cur.execute("""
+                INSERT INTO logs_api (timestamp, request_id, event, method, path, status_code, duration, client_ip, input_data, prediction, probability, error)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                entry.get("timestamp"),
+                entry.get("request_id"),
+                entry.get("event"),
+                entry.get("method"),
+                entry.get("path"),
+                entry.get("status_code"),
+                entry.get("duration"),
+                entry.get("client_ip"),
+                Json(entry.get("input_data")) if entry.get("input_data") else None,
+                entry.get("prediction"),
+                entry.get("probabilité_defaut"),
+                entry.get("error")
+            ))
+    except Exception as e:
+        logger.error(f"Erreur lors de l'insertion Supabase : {e}")
+    finally:
+        conn.close()
 
 #-----------------------------------------------------------------------------------------------------
 # Création de l'application FastAPI et chargement du modèle
@@ -267,7 +334,7 @@ async def log_request_middleware(request: Request, call_next):
     status_code = response.status_code
     logger.info(f"Fin requête {request_id} : {request.method} {request.url.path} - "
             f"Status {response.status_code} - Durée {duration:.3f}s")
-    write_log({
+    log_entry = {
         "timestamp": datetime.utcnow().isoformat(),
         "request_id": request_id,
         "method": request.method,
@@ -276,11 +343,15 @@ async def log_request_middleware(request: Request, call_next):
         "duration": duration,
         "client_ip": request.client.host if request.client else "unknown",
         "event": "http_request"
-    })
+    }
+    write_local_log(log_entry)
+    write_supabase_log(log_entry)
 
     return response 
 
-# Chargement du modèle
+# ============================================================
+# CHARGEMENT DU MODÈLE
+# ============================================================
 
 try:
     model = joblib.load("model.pkl")
@@ -320,12 +391,14 @@ def predict(request: Request, client: ClientData):
 
     if model is None:
         logger.critical(f"Modèle non chargé au moment de la prédiction- Request ID: {request_id}")
-        write_log({
+        entry = {
             "timestamp": datetime.utcnow().isoformat(),
             "request_id": request.state.request_id if hasattr(request.state, "request_id") else "unknown",
             "event": "prediction_error",
             "error": "Modèle non chargé"
-        })
+        }
+        write_local_log(entry)
+        write_supabase_log(entry)
         raise HTTPException(status_code=500, detail="Modèle non chargé")
 
     try:
@@ -337,14 +410,16 @@ def predict(request: Request, client: ClientData):
         probabilité_defaut = round(float(y_proba), 4)
 
         logger.info(f"Prédiction calculée : {prediction} - Probabilité de défaut : {probabilité_defaut}")
-        write_log({
+        entry = {
             "timestamp": datetime.utcnow().isoformat(),
             "request_id": request.state.request_id,
             "event": "prediction",
             "input_data": client.dict(),
             "prediction": prediction,
             "probabilité_defaut": probabilité_defaut
-        })
+        }
+        write_local_log(entry)
+        write_supabase_log(entry)
         return {
             "prediction": prediction,
             "probabilité_defaut": probabilité_defaut
@@ -352,13 +427,15 @@ def predict(request: Request, client: ClientData):
     except Exception as e:
         logger.error(f"Erreur lors de la prédiction - Request ID : {request_id}", exc_info=True)
         print(traceback.format_exc())
-        write_log({
+        entry = {
             "timestamp": datetime.utcnow().isoformat(),
             "request_id": request.state.request_id if hasattr(request.state, "request_id") else "unknown",
             "event": "prediction_error",
             "error": str(e),
             "traceback": traceback.format_exc()
-        })
+        }
+        write_local_log(entry)
+        write_supabase_log(entry)
         raise HTTPException(status_code=400, detail="Erreur lors de la prédiction. Vérifiez les données d'entrée.")
 
 #------------------------------------------------------------------------------------------------------------------
@@ -372,7 +449,6 @@ def get_logs():
             return PlainTextResponse(f.read())
     except Exception as e:
         return PlainTextResponse(f"Erreur : {e}", status_code=500)
-
 
 
 
