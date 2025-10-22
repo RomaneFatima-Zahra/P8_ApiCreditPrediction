@@ -266,14 +266,14 @@ def get_db_connection():
         return None
 
 def write_supabase_log(entry: dict):
-    """Envoie des logs dans la table logs_api sur Supabase"""
+    """Envoie des logs dans la table api_logs sur Supabase"""
     conn = get_db_connection()
     if conn is None:
         return
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                CREATE TABLE IF NOT EXISTS logs_api (
+                CREATE TABLE IF NOT EXISTS api_logs (
                     id SERIAL PRIMARY KEY,
                     timestamp TIMESTAMPTZ,
                     request_id TEXT,
@@ -290,7 +290,7 @@ def write_supabase_log(entry: dict):
                 )
             """)
             cur.execute("""
-                INSERT INTO logs_api (timestamp, request_id, event, method, path, status_code, duration, client_ip, input_data, prediction, probability, error)
+                INSERT INTO api_logs (timestamp, request_id, event, method, path, status_code, duration, client_ip, input_data, prediction, probability, error)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """, (
                 entry.get("timestamp"),
