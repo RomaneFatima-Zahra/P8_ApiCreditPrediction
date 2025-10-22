@@ -86,7 +86,6 @@ jobs:
       HF_USERNAME: RomaneF
       HF_SPACE_NAME: test_P6_LR
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      SUPABASE_URI: ${{ secrets.SUPABASE_URI }}
       
 
     steps:
