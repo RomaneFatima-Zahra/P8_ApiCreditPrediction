@@ -223,9 +223,10 @@ class ClientData(BaseModel):
 # Configuration du logger
 # ============================================================
 
-LOG_DIR = "/tmp/logs"
+LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = os.path.join(LOG_DIR, "api_logger.log")
+
 
 logger = logging.getLogger("api_logger")
 logger.setLevel(logging.INFO)
