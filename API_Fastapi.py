@@ -335,20 +335,20 @@ def predict(request: Request, client: ClientData):
         y_pred = model.predict(df)[0]
         y_proba = model.predict_proba(df)[0][1]
         prediction = "Défaillant" if y_pred == 1 else "Solvable"
-        probabilité_defaut = round(float(y_proba), 4)
+        probabilite_defaut = round(float(y_proba), 4)
 
-        logger.info(f"Prédiction calculée : {prediction} - Probabilité de défaut : {probabilité_defaut}")
+        logger.info(f"Prédiction calculée : {prediction} - Probabilité de défaut : {probabilite_defaut}")
         write_log({
             "timestamp": datetime.utcnow().isoformat(),
             "request_id": request.state.request_id,
             "event": "prediction",
             "input_data": client.dict(),
             "prediction": prediction,
-            "probabilité_defaut": probabilité_defaut
+            "probabilite_defaut": probabilite_defaut
         })
         return {
             "prediction": prediction,
-            "probabilité_defaut": probabilité_defaut
+            "probabilite_defaut": probabilite_defaut
         }
     except Exception as e:
         logger.error(f"Erreur lors de la prédiction - Request ID : {request_id}", exc_info=True)
@@ -369,13 +369,21 @@ def predict(request: Request, client: ClientData):
 @app.get("/logs", tags=["Logg"])
 def get_logs():
     try:
-        with open("/tmp/logs/api_logger.log", "r") as f:
+        with open("logs/api_logger.log", "r") as f:
             return PlainTextResponse(f.read())
     except Exception as e:
         return PlainTextResponse(f"Erreur : {e}", status_code=500)
 
 
 #------------------------------------------------------------------------------------------------------------------
-# Fin du script
+# Endpoint pour ignorer l'erreur générée par /favicon
 #------------------------------------------------------------------------------------------------------------------
 
+@app.get("/favicon.ico")
+async def favicon():
+    # ignorer l'erreur /favicon.ico:
+    return {}
+
+#------------------------------------------------------------------------------------------------------------------
+# Fin du script
+#------------------------------------------------------------------------------------------------------------------
