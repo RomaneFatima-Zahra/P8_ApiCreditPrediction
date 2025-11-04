@@ -248,6 +248,7 @@ RUN pip install ... → installe les dépendances Python du projet listées dans
 EXPOSE 7860 → indique le port sur lequel l’API sera disponible à l’extérieur du conteneur.
 
 CMD [...] → commande exécutée au démarrage : lance le serveur Uvicorn pour exécuter l’API FastAPI.
+
 ---
 
 ## 🪵 Logs et monitoring
@@ -270,8 +271,11 @@ Faciliter le debugging, l’analyse post-déploiement et la supervision (monitor
 Chaque entrée du fichier api_logger.log contient les informations suivantes :
 
 🕒 **Timestamp**	: Date et heure de l’événement (format ISO 8601).
+
 ⚙️ **Niveau** : 	Niveau de gravité (INFO, WARNING, ERROR, CRITICAL).
+
 🧩 **Module/Fonction**	: Emplacement du log dans le code (ex : predict, startup_event).
+
 🧠 **Message** : 	Détail du message (ex : “Requête reçue pour un client solvable”).
 
 --
@@ -394,7 +398,7 @@ Le pipeline est composé de **deux jobs principaux**, exécutés dans cet ordre 
 
 > 🔄 Total : environ **6 minutes** du push au build complet.
 
---
+---
 
 # 📊 Monitoring et Analyse Avancée
 
