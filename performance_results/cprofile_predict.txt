@@ -1,0 +1,38 @@
+         1317270 function calls (1291029 primitive calls) in 0.311 seconds
+
+   Ordered by: cumulative time
+   List reduced from 741 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  101/100    0.000    0.000    0.307    0.003 pipeline.py:739(predict)
+  500/100    0.001    0.000    0.272    0.003 _set_output.py:314(wrapped)
+      100    0.002    0.000    0.272    0.003 _column_transformer.py:1028(transform)
+      100    0.001    0.000    0.259    0.003 _column_transformer.py:825(_call_func_on_transformers)
+      100    0.000    0.000    0.217    0.002 parallel.py:54(__call__)
+      100    0.000    0.000    0.217    0.002 parallel.py:1902(__call__)
+      400    0.000    0.000    0.216    0.001 parallel.py:1819(_get_sequential_output)
+      200    0.001    0.000    0.215    0.001 parallel.py:131(__call__)
+      200    0.000    0.000    0.213    0.001 pipeline.py:1498(_transform_one)
+      200    0.001    0.000    0.212    0.001 pipeline.py:1051(transform)
+     1600    0.008    0.000    0.123    0.000 validation.py:734(check_array)
+      200    0.002    0.000    0.118    0.001 _base.py:593(transform)
+      300    0.001    0.000    0.113    0.000 validation.py:2845(validate_data)
+      200    0.000    0.000    0.110    0.001 _base.py:319(_validate_input)
+      100    0.002    0.000    0.073    0.001 _encoders.py:1000(transform)
+      100    0.002    0.000    0.065    0.001 _encoders.py:190(_transform)
+     1600    0.001    0.000    0.048    0.000 generic.py:6432(dtypes)
+     1800    0.006    0.000    0.046    0.000 series.py:389(__init__)
+     1400    0.002    0.000    0.042    0.000 _indexing.py:242(_safe_indexing)
+    71408    0.006    0.000    0.041    0.000 {built-in method builtins.hasattr}
+269284/269282    0.020    0.000    0.037    0.000 {built-in method builtins.isinstance}
+      200    0.000    0.000    0.035    0.000 _indexing.py:43(_pandas_indexing)
+      200    0.000    0.000    0.034    0.000 indexing.py:1176(__getitem__)
+      200    0.000    0.000    0.033    0.000 indexing.py:1365(_getitem_tuple)
+ 1100/800    0.001    0.000    0.031    0.000 validation.py:1670(check_is_fitted)
+  300/100    0.004    0.000    0.030    0.000 core.py:710(inner_f)
+      100    0.001    0.000    0.030    0.000 sklearn.py:1707(predict)
+      200    0.000    0.000    0.030    0.000 indexing.py:1004(_getitem_tuple_same_dim)
+      200    0.000    0.000    0.029    0.000 indexing.py:1397(_getitem_axis)
+4000/1400    0.001    0.000    0.028    0.000 _tags.py:298(get_tags)
+
+
