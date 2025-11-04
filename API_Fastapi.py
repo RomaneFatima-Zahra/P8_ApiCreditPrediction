@@ -335,20 +335,20 @@ def predict(request: Request, client: ClientData):
         y_pred = model.predict(df)[0]
         y_proba = model.predict_proba(df)[0][1]
         prediction = "Défaillant" if y_pred == 1 else "Solvable"
-        probabilite_defaut = round(float(y_proba), 4)
+        probabilité_defaut = round(float(y_proba), 4)
 
-        logger.info(f"Prédiction calculée : {prediction} - Probabilité de défaut : {probabilite_defaut}")
+        logger.info(f"Prédiction calculée : {prediction} - Probabilité de défaut : {probabilité_defaut}")
         write_log({
             "timestamp": datetime.utcnow().isoformat(),
             "request_id": request.state.request_id,
             "event": "prediction",
             "input_data": client.dict(),
             "prediction": prediction,
-            "probabilite_defaut": probabilite_defaut
+            "probabilité_defaut": probabilité_defaut
         })
         return {
             "prediction": prediction,
-            "probabilite_defaut": probabilite_defaut
+            "probabilité_defaut": probabilité_defaut
         }
     except Exception as e:
         logger.error(f"Erreur lors de la prédiction - Request ID : {request_id}", exc_info=True)
